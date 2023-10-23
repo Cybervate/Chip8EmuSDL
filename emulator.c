@@ -3,18 +3,18 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 512
-#define TICK_INTERVAL 60
-
+// system ram 4kb
 uint8_t ram[4096];
 
 uint16_t pc;
 uint16_t opcode;
 
+// display buffer, pixel map
 uint8_t display[32][64];
 
+// variable registers
 uint8_t v[0x10];
 
 uint16_t stack[16];
@@ -26,7 +26,6 @@ uint8_t soundTimer;
 
 // Font
 unsigned char font[80] = 
-
 {0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 0x20, 0x60, 0x20, 0x20, 0x70, // 1
 0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -44,6 +43,7 @@ unsigned char font[80] =
 0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 0xF0, 0x80, 0xF0, 0x80, 0x80};  // F 
 
+// input file from argv
 void loadGame(char *game) {
     FILE *fgame;
 
@@ -54,6 +54,7 @@ void loadGame(char *game) {
         exit(42);
     }
 
+    // put game into ram at 0x200
     fread(&ram[0x200], 1, (0x1000 - 0x200), fgame);
 
     fclose(fgame);
@@ -81,8 +82,11 @@ void draw(uint8_t x, uint8_t y, uint8_t n) {
 
 }
 
+void unknownInstruction() {
+    exit(42);
+}
+
 void cycle() {
-    // int i;
     uint8_t x, y, n;
     uint8_t nn;
     uint16_t nnn;
@@ -95,10 +99,13 @@ void cycle() {
     nn  = opcode & 0x00FF; // the lowest 8 bits
     nnn = opcode & 0x0FFF; // the lowest 12 bits
 
+    // debug to show current instruction
     printf("PC: %x, OPCODE: %x", pc, opcode);
 
+    // go to next set of instructions
     pc += 2;
 
+    // instruction list
     switch (opcode & 0xF000) {
         case 0x0000:
             switch(nn) {
@@ -108,6 +115,7 @@ void cycle() {
                     break;
                 case 0x00EE:
                     printf("return from a subroutine");
+                    pc = stack[0];
                     break;
             }
             break;
@@ -116,12 +124,21 @@ void cycle() {
             pc = nnn;
             break;
         case 0x2000:
+            printf("Go to address: %x", nnn);
+            stack[0] = pc;
+            pc = nnn;
             break;
         case 0x3000:
+            printf("Skip if vx: %x == nn: %x", v[x], nn);
+            if (v[x] == nn) pc += 2;
             break;
         case 0x4000:
+            printf("Skip if vx: %x != nn: %x", v[x], nn);
+            if (v[x] != nn) pc += 2;
             break;
         case 0x5000:
+            printf("Skip if vx: %x == vy: %x", v[x], v[y]);
+            if (v[x] == v[y]) pc += 2;
             break;
         case 0x6000:
             printf("set register VX: %x", nn);
@@ -132,38 +149,118 @@ void cycle() {
             v[x] += nn;
             break;
         case 0x8000:
+            switch (n) {
+                case 0x0:
+                    printf("Set VX: %x, to VY: %x", v[x], v[y]);
+                    v[x] = v[y];
+                    break;
+                case 0x1:
+                    printf("VX | VY");
+                    v[x] = v[x] | v[y];
+                    break;
+                case 0x2:
+                    printf("VX & VY");
+                    v[x] = v[x] & v[y];
+                    break;
+                case 0x3:
+                    printf("VX ^ VY");
+                    v[x] = v[x] ^ v[y];
+                    break;
+                case 0x4:
+                    printf("Set VX to VX: %x + VY: %x", v[x], v[y]);
+                    if (v[x] + v[y] > 255) v[0xf] = 1;
+                    else v[0xf] = 0;
+                    v[x] = v[x] + v[y];
+                    break;
+                case 0x5:
+                    printf("Set VX to VX: %x - VY: %x", v[x], v[y]);
+                    if (v[x] > v[y]) v[0xf] = 1;
+                    else v[0xf] = 0;
+                    v[x] = v[x] - v[y];
+                    break;
+                case 0x7:
+                    printf("Set VX to VY: %x - VX: %x", v[y], v[x]);
+                    if (v[y] > v[x]) v[0xf] = 1;
+                    else v[0xf] = 0l;
+                    v[x] = v[y] - v[x];
+                    break;
+                case 0x6:
+                    // TODO 0x6 and 0xe ambiguos
+                    printf("Shift right");
+                    v[x] = v[y];
+                    v[x] = v[x] & 1;
+                    v[x] = v[x] >> 1;
+                    break;
+                case 0xe:
+                    printf("Shift left");
+                    v[x] = v[y];
+                    v[x] = (v[x] >> 7) & 1;
+                    v[x] = v[x] << 1;
+                    break;
+            }
             break;
         case 0x9000:
+            printf("Skip if vx: %x != vy: %x", v[x], v[y]);
+            if (v[x] != v[y]) pc += 2;
             break;
         case 0xA000:
             printf("set index register I: %x", nnn);
             I = nnn;
             break;
         case 0xB000:
+            // TODO some implementations may not accounted for
+            pc = nnn + v[0];
             break;
         case 0xC000:
+            v[x] = rand() & nn;
             break;
         case 0xD000:
             printf("draw vx: %d, vy: %d, n: %d", v[x], v[y], n);
             draw(v[x], v[y], n);
-            // draw(v[x], v[y], n);
             break;
         case 0xE000:
             break;
         case 0xF000:
+            switch (nn) {
+                case 0x07:
+                    printf("VX set to delayTimer: %x", delayTimer);
+                    v[x] = delayTimer;
+                    break;
+                case 0x15:
+                    printf("delayTimer set to VX: %x", v[x]);
+                    delayTimer = v[x];
+                    break;
+                case 0x18:
+                    printf("soundTimer set to VX: %x", v[x]);
+                    soundTimer = v[x];
+                    break;
+                case 0x1E:
+                    printf("Add to Index VX: %x", v[x]);
+                    break;
+                case 0x0a:
+                    printf("Get Key");
+                    break;
+                case 0x29:
+                    printf("Font character");
+                    break;
+                case 0x33:
+                    printf("Binary Coded Decimal Conversion");
+                    break;
+            }
             break;
         default:
-            exit(42);
+            unknownInstruction();
             break;
         }
         
-
     }
 
 void init() {
     pc = 0x200;
     opcode = 0;
     I = 0;
+
+    srand(time(NULL)); 
 
     memset(ram, 0, sizeof(uint8_t) * 4096);
     memset(v, 0, sizeof(uint8_t) * 0x10);
@@ -173,6 +270,7 @@ void init() {
     delayTimer = 0;
     soundTimer = 0;
 
+    // load font into memory
     for (int i = 0; i < 80; i++) {
         ram[0x050 + i] = font[i];
     }
