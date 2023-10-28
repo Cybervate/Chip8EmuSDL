@@ -9,6 +9,16 @@
 #define SPEED_MULTIPLIER 4
 #define TICK_INTERVAL (60 * SPEED_MULTIPLIER)
 
+enum Colors {White, Red, Green, Blue, Magenta};
+enum Colors color = Magenta;
+uint8_t colors[][4] = {
+    {255, 255, 255, 255},
+    {255, 0, 0, 255},
+    {0, 255, 0, 255},
+    {0, 0, 255, 255},
+    {255, 0, 255, 255}
+};
+
 // set false to exit
 uint8_t running;
 
@@ -24,12 +34,7 @@ void drawPix(SDL_Renderer *renderer, int xPos, int yPos) {
     SDL_RenderFillRect(renderer, &rect);
 }
 
-void update() {
-
-}
-
 void input() {
-    printf("IXI:");
     memset(keys, 0, sizeof keys);
 
     /*
@@ -79,7 +84,7 @@ void drawSDL() {
     SDL_RenderFillRect(renderer, &rect);
 
     // loop through display buffer pixel map, and draw all pixels
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, colors[color][0], colors[color][1], colors[color][2], colors[color][3]);
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 64; j++) {
             if(display[i][j]) {
@@ -122,7 +127,6 @@ int main(int argc, char** argv) {
         
         if (ticks == SPEED_MULTIPLIER - 1) {
             input();
-            update();
             drawSDL();
             ticks = 0;
         }
