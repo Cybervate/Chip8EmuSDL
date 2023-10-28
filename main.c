@@ -1,27 +1,25 @@
 #include "emulator.c"
 
-
-#define SCALING 16 // Original chip 8 is 64x32, Scaling multiplies this by a set amount in order to make the game bigger, I set default to 16 which is 1024x512
+// Original chip 8 is 64x32, Scaling multiplies this by a set amount in order to make the game bigger, I set default to 16 which is 1024x512
+#define SCALING 16 
 #define WINDOW_WIDTH (64 * SCALING)
 #define WINDOW_HEIGHT (32 * SCALING)
 
 // fps
-#define TICK_INTERVAL 60
+#define SPEED_MULTIPLIER 4
+#define TICK_INTERVAL (60 * SPEED_MULTIPLIER)
 
+// set false to exit
 uint8_t running;
+
 SDL_Renderer *renderer;
 SDL_Window *window;
 
 int frameCount, timerFPS, lastFrame, fps;
 
-void drawPix(SDL_Renderer *renderer, int xPos, int yPos) {
-    // for (int i = 0; i < SCALING; i++) {
-    //     for (int j = 0; j < SCALING; j++) {
-    //         SDL_RenderDrawPoint(renderer, (SCALING*xPos) + i, (SCALING*yPos) + j);
-    //     }
-    // }
-    // SDL_Rect rect = {xPos*SCALING, yPos*SCALING, SCALING, SCALING};
+const uint8_t *keystates = SDL_GetKeyboardState(NULL);
 
+void drawPix(SDL_Renderer *renderer, int xPos, int yPos) {
     SDL_Rect rect = {xPos*SCALING, yPos*SCALING, SCALING, SCALING};
     SDL_RenderFillRect(renderer, &rect);
 }
@@ -31,15 +29,43 @@ void update() {
 }
 
 void input() {
+    printf("IXI:");
+    memset(keys, 0, sizeof keys);
+
+    /*
+    Input pad
+    1 2 3 4
+    q w e r
+    a s d f
+    z x c v
+    */
+    keys[0] = keystates[SDL_SCANCODE_1];
+    keys[1] = keystates[SDL_SCANCODE_2];
+    keys[2] = keystates[SDL_SCANCODE_3];
+    keys[3] = keystates[SDL_SCANCODE_4];
+    keys[4] = keystates[SDL_SCANCODE_Q];
+    keys[5] = keystates[SDL_SCANCODE_W];
+    keys[6] = keystates[SDL_SCANCODE_E];
+    keys[7] = keystates[SDL_SCANCODE_R];
+    keys[8] = keystates[SDL_SCANCODE_A];
+    keys[9] = keystates[SDL_SCANCODE_S];
+    keys[10] = keystates[SDL_SCANCODE_D];
+    keys[11] = keystates[SDL_SCANCODE_F];
+    keys[12] = keystates[SDL_SCANCODE_Z];
+    keys[13] = keystates[SDL_SCANCODE_X];
+    keys[14] = keystates[SDL_SCANCODE_C];
+    keys[15] = keystates[SDL_SCANCODE_V];
+
+    if (keystates[SDL_SCANCODE_ESCAPE]) {
+        running = 0;
+    }
+
     SDL_Event e;
+
     while (SDL_PollEvent(&e)) {
         if(e.type == SDL_QUIT) {
             running = 0;
         }
-    }
-    const uint8_t *keystates = SDL_GetKeyboardState(NULL);
-    if (keystates[SDL_SCANCODE_ESCAPE]) {
-        running = 0;
     }
 }
 
@@ -63,7 +89,7 @@ void drawSDL() {
     }
 
     frameCount++;
-    int timeFPS = SDL_GetTicks() - lastFrame;
+    int timerFPS = SDL_GetTicks() - lastFrame;
     if(timerFPS < (1000/TICK_INTERVAL)) {
         SDL_Delay((1000/TICK_INTERVAL) - timerFPS);
     }
@@ -88,10 +114,18 @@ int main(int argc, char** argv) {
     SDL_SetWindowTitle(window, "Chip8Emu - cybervate");
     SDL_ShowCursor(1);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
-    
+
+    int ticks = 0;
+
     // game loop
     while(running) {
-        cycle();
+        
+        if (ticks == SPEED_MULTIPLIER - 1) {
+            input();
+            update();
+            drawSDL();
+            ticks = 0;
+        }
 
         lastFrame = SDL_GetTicks();
         if(lastFrame >= (lastTime + 1000)) {
@@ -100,13 +134,11 @@ int main(int argc, char** argv) {
             frameCount = 0;
         }
 
-        printf("FPS: %d\n", fps);
+        printf("FPS: %d, %d\n", fps, fps/SPEED_MULTIPLIER);
 
-        update();
-        input();
-        drawSDL();
-
-        
+        cycle();
+        timerTick();
+        ticks++;
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

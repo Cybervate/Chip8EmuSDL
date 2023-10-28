@@ -5,6 +5,8 @@
 #include <string.h>
 #include <time.h>
 
+#define FONT_LOCATION 0x050
+
 // system ram 4kb
 uint8_t ram[4096];
 
@@ -21,8 +23,16 @@ uint16_t stack[16];
 uint16_t I;
 
 uint8_t delayTimer;
-
 uint8_t soundTimer;
+
+/*
+Input pad
+1 2 3 4
+q w e r
+a s d f
+z x c v
+*/
+uint8_t keys[16];
 
 // Font
 unsigned char font[80] = 
@@ -219,6 +229,14 @@ void cycle() {
             draw(v[x], v[y], n);
             break;
         case 0xE000:
+            switch (nn) {
+                case 0x9E:
+                    if (keys[v[x]]) pc += 2;
+                    break;
+                case 0xA1:
+                    if(!keys[v[x]]) pc += 2;
+                    break;
+            }
             break;
         case 0xF000:
             switch (nn) {
@@ -236,15 +254,31 @@ void cycle() {
                     break;
                 case 0x1E:
                     printf("Add to Index VX: %x", v[x]);
+                    if (I + v[x > 0xfff]) v[0xf] = 1;
+                    else v[0xf] = 0;
+                    I += v[x];
                     break;
                 case 0x0a:
                     printf("Get Key");
+                    // TODO should activate on release, not press
+                    for (int i = 0; i < 16; i++) {
+                        if (keys[i]) {
+                            v[x] = i;
+                            goto keyBreak;
+                        }
+                    }
+                    pc -= 2;
+                    keyBreak:
                     break;
                 case 0x29:
                     printf("Font character");
+                    I = FONT_LOCATION + (5 * v[x]);
                     break;
                 case 0x33:
                     printf("Binary Coded Decimal Conversion");
+                    ram[I] = v[x] / 100;
+                    ram[I + 1] = (v[x] % 100) / 10;
+                    ram[I + 2] = v[x] % 10;
                     break;
             }
             break;
@@ -254,6 +288,22 @@ void cycle() {
         }
         
     }
+
+void timerTick() {
+    if (delayTimer > 0) {
+        delayTimer--;
+    }
+    if (soundTimer > 0) {
+        soundTimer--;
+        if (!soundTimer)
+        {
+            // TODO
+            printf("SOUNDTIMERWENTOFF");
+        }
+        
+    }
+    
+}
 
 void init() {
     pc = 0x200;
@@ -272,6 +322,6 @@ void init() {
 
     // load font into memory
     for (int i = 0; i < 80; i++) {
-        ram[0x050 + i] = font[i];
+        ram[FONT_LOCATION + i] = font[i];
     }
 }
