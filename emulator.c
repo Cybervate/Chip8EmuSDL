@@ -95,8 +95,9 @@ void draw(uint8_t x, uint8_t y, uint8_t n) {
 
 }
 
-void unknownInstruction() {
+void unknownInstruction(uint16_t instruction) {
     // TODO
+    printf("UNKOWN INSTUCTION: %x", instruction);
     exit(42);
 }
 
@@ -130,6 +131,9 @@ void cycle() {
                 case 0x00EE:
                     printf("return from a subroutine");
                     pc = stack[0];
+                    break;
+                default:
+                    unknownInstruction(opcode);
                     break;
             }
             break;
@@ -211,6 +215,9 @@ void cycle() {
                     v[0xf] = (v[x] >> 7) & 1;
                     v[x] = v[x] << 1;
                     break;
+                default:
+                    unknownInstruction(opcode);
+                    break;
             }
             break;
         case 0x9000:
@@ -240,6 +247,8 @@ void cycle() {
                 case 0xA1:
                     if(!keys[v[x]]) pc += 2;
                     break;
+                defualt:
+                    unknownInstruction(opcode);
             }
             break;
         case 0xF000:
@@ -295,10 +304,12 @@ void cycle() {
                         v[i] = ram[I + i];
                     }
                     break;
+                default:
+                    unknownInstruction(opcode);
             }
             break;
         default:
-            unknownInstruction();
+            unknownInstruction(opcode);
             break;
         }
         

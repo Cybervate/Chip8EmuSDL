@@ -1,18 +1,18 @@
 #include "emulator.c"
 
 // Original chip 8 is 64x32, Scaling multiplies this by a set amount in order to make the game bigger, I set default to 16 which is 1024x512
-#define SCALING 16 
-#define WINDOW_WIDTH (64 * SCALING)
-#define WINDOW_HEIGHT (32 * SCALING)
+uint8_t scaling = 16;
+#define WINDOW_WIDTH (64 * scaling)
+#define WINDOW_HEIGHT (32 * scaling)
 
 // fps
-#define SPEED_MULTIPLIER 4
-#define TICK_INTERVAL (60 * SPEED_MULTIPLIER)
+unsigned int speedMultipler = 4;
+unsigned int tickInterval = 60 * speedMultipler;
 
-#define MUTE 1
+uint8_t mute = 0;
 
 enum Colors {White, Red, Green, Blue, Magenta};
-enum Colors color = Magenta;
+enum Colors color = White;
 uint8_t colors[][4] = {
     {255, 255, 255, 255},
     {255, 0, 0, 255},
@@ -32,12 +32,12 @@ int frameCount, timerFPS, lastFrame, fps;
 const uint8_t *keystates = SDL_GetKeyboardState(NULL);
 
 void drawPix(SDL_Renderer *renderer, int xPos, int yPos) {
-    SDL_Rect rect = {xPos*SCALING, yPos*SCALING, SCALING, SCALING};
+    SDL_Rect rect = {xPos*scaling, yPos*scaling, scaling, scaling};
     SDL_RenderFillRect(renderer, &rect);
 }
 
 void playBeep(Mix_Chunk * beep) {
-    if (!MUTE) Mix_PlayChannel(-1, beep, 0);
+    if (!mute) Mix_PlayChannel(-1, beep, 0);
 }
 
 void input() {
@@ -101,8 +101,8 @@ void drawSDL() {
 
     frameCount++;
     int timerFPS = SDL_GetTicks() - lastFrame;
-    if(timerFPS < (1000/TICK_INTERVAL)) {
-        SDL_Delay((1000/TICK_INTERVAL) - timerFPS);
+    if(timerFPS < (1000/tickInterval)) {
+        SDL_Delay((1000/tickInterval) - timerFPS);
     }
 
     SDL_RenderPresent(renderer);
@@ -113,6 +113,43 @@ int main(int argc, char** argv) {
     // initalize
     init();
     loadGame(argv[1]);
+
+    // Handle command line args
+    if (argc > 2) {
+        for(int i = 2; i < argc; i++) {
+            if (strcmp(argv[i], "-m") == 0) {
+                mute = 1;
+            }
+            else if(strcmp(argv[i], "-c") == 0) {
+                if (argv[i + 1]) {
+                    if(strcmp(argv[i + 1], "white") == 0) {
+                        color = White;
+                    }
+                    else if(strcmp(argv[i + 1], "red") == 0) {
+                        color = Red;
+                    }
+                    else if(strcmp(argv[i + 1], "green") == 0) {
+                        color = Green;
+                    }
+                    else if(strcmp(argv[i + 1], "blue") == 0) {
+                        color = Blue;
+                    }
+                    else if(strcmp(argv[i + 1], "magenta") == 0) {
+                        color = Magenta;
+                    }
+                }
+            }
+            else if(strcmp(argv[i], "--speed") == 0) {
+                if (argv[i + 1]) speedMultipler = atoi(argv[i + 1]);
+            }
+            else if(strcmp(argv[i], "--scaling") == 0) {
+                if (argv[i + 1]) scaling = atoi(argv[i + 1]);
+            }
+            else if(strcmp(argv[i], "--fps") == 0) {
+                if (argv[i + 1]) tickInterval = atoi(argv[i + 1]) * speedMultipler;
+            }
+        }
+    }
 
     running = 1;
     static int lastTime = 0;
@@ -138,7 +175,7 @@ int main(int argc, char** argv) {
     // game loop
     while(running) {
         
-        if (ticks == SPEED_MULTIPLIER - 1) {
+        if (ticks == speedMultipler - 1) {
             input();
             drawSDL();
             ticks = 0;
@@ -151,7 +188,7 @@ int main(int argc, char** argv) {
             frameCount = 0;
         }
 
-        printf("FPS: %d, %d\n", fps, fps/SPEED_MULTIPLIER);
+        printf("FPS: %d, %d\n", fps, fps/speedMultipler);
 
         cycle();
         timerTick();
@@ -171,14 +208,5 @@ int main(int argc, char** argv) {
 
     SDL_Quit();
 
-    // debug
-    // for(int i = 0; i < 4096; i++) {
-    //     printf("%x: %x ", i, ram[i]);
-    // }
-    // for(int i = 0; i < 64; i++) {
-    //     for (int j = 0; j < 32; j++) {
-    //         printf("%d", display[i][j]);
-    //     }
-    // }
     return 0;
 }
