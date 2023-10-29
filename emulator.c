@@ -93,6 +93,7 @@ void draw(uint8_t x, uint8_t y, uint8_t n) {
 }
 
 void unknownInstruction() {
+    // TODO
     exit(42);
 }
 
@@ -198,13 +199,13 @@ void cycle() {
                     // TODO 0x6 and 0xe ambiguos
                     printf("Shift right");
                     v[x] = v[y];
-                    v[x] = v[x] & 1;
+                    v[0xf] = v[x] & 1;
                     v[x] = v[x] >> 1;
                     break;
                 case 0xe:
                     printf("Shift left");
                     v[x] = v[y];
-                    v[x] = (v[x] >> 7) & 1;
+                    v[0xf] = (v[x] >> 7) & 1;
                     v[x] = v[x] << 1;
                     break;
             }
@@ -279,6 +280,17 @@ void cycle() {
                     ram[I] = v[x] / 100;
                     ram[I + 1] = (v[x] % 100) / 10;
                     ram[I + 2] = v[x] % 10;
+                    break;
+                case 0x55:
+                    // 0x55 and 0x65 are ambiguos
+                    for (int i = 0; i <= x; i++) {
+                        ram[I + i] = v[i];
+                    }
+                    break;
+                case 0x65:
+                    for (int i = 0; i <= x; i++) {
+                        v[i] = ram[I + i];
+                    }
                     break;
             }
             break;
