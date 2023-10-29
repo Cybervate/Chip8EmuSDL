@@ -9,6 +9,8 @@
 #define SPEED_MULTIPLIER 4
 #define TICK_INTERVAL (60 * SPEED_MULTIPLIER)
 
+#define MUTE 1
+
 enum Colors {White, Red, Green, Blue, Magenta};
 enum Colors color = Magenta;
 uint8_t colors[][4] = {
@@ -32,6 +34,10 @@ const uint8_t *keystates = SDL_GetKeyboardState(NULL);
 void drawPix(SDL_Renderer *renderer, int xPos, int yPos) {
     SDL_Rect rect = {xPos*SCALING, yPos*SCALING, SCALING, SCALING};
     SDL_RenderFillRect(renderer, &rect);
+}
+
+void playBeep(Mix_Chunk * beep) {
+    if (!MUTE) Mix_PlayChannel(-1, beep, 0);
 }
 
 void input() {
@@ -113,12 +119,19 @@ int main(int argc, char** argv) {
     if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         printf("\nFailed at SDL_Init()\n");
     }
+    if (Mix_Init(0) < 0) {
+        printf("\nFailed at Mix_Init\n");
+    }
     if(SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer) < 0) {
         printf("\nFailed at window and renderer\n");
     }
     SDL_SetWindowTitle(window, "Chip8Emu - cybervate");
     SDL_ShowCursor(1);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
+    Mix_Chunk * beep = Mix_LoadWAV("etherhit.wav");
+    if (!beep) printf("loading sound effect failed");
 
     int ticks = 0;
 
@@ -142,10 +155,20 @@ int main(int argc, char** argv) {
 
         cycle();
         timerTick();
+
+        if (soundFlag) {
+            playBeep(beep);
+            soundFlag = 0;
+        }
+
         ticks++;
     }
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    Mix_FreeChunk(beep);
+    Mix_CloseAudio();
+
     SDL_Quit();
 
     // debug

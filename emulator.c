@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -24,6 +25,8 @@ uint16_t I;
 
 uint8_t delayTimer;
 uint8_t soundTimer;
+
+uint8_t soundFlag = 0;
 
 /*
 Input pad
@@ -311,10 +314,10 @@ void timerTick() {
         {
             // TODO
             printf("SOUNDTIMERWENTOFF");
+            soundFlag = 1;
         }
         
     }
-    
 }
 
 void init() {
