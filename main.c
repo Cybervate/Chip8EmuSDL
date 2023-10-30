@@ -50,22 +50,22 @@ void input() {
     a s d f
     z x c v
     */
-    keys[0] = keystates[SDL_SCANCODE_1];
-    keys[1] = keystates[SDL_SCANCODE_2];
-    keys[2] = keystates[SDL_SCANCODE_3];
-    keys[3] = keystates[SDL_SCANCODE_4];
-    keys[4] = keystates[SDL_SCANCODE_Q];
-    keys[5] = keystates[SDL_SCANCODE_W];
-    keys[6] = keystates[SDL_SCANCODE_E];
-    keys[7] = keystates[SDL_SCANCODE_R];
-    keys[8] = keystates[SDL_SCANCODE_A];
-    keys[9] = keystates[SDL_SCANCODE_S];
-    keys[10] = keystates[SDL_SCANCODE_D];
-    keys[11] = keystates[SDL_SCANCODE_F];
-    keys[12] = keystates[SDL_SCANCODE_Z];
-    keys[13] = keystates[SDL_SCANCODE_X];
-    keys[14] = keystates[SDL_SCANCODE_C];
-    keys[15] = keystates[SDL_SCANCODE_V];
+    keys[0]     = keystates[SDL_SCANCODE_1];
+    keys[1]     = keystates[SDL_SCANCODE_2];
+    keys[2]     = keystates[SDL_SCANCODE_3];
+    keys[3]     = keystates[SDL_SCANCODE_4];
+    keys[4]     = keystates[SDL_SCANCODE_Q];
+    keys[5]     = keystates[SDL_SCANCODE_W];
+    keys[6]     = keystates[SDL_SCANCODE_E];
+    keys[7]     = keystates[SDL_SCANCODE_R];
+    keys[8]     = keystates[SDL_SCANCODE_A];
+    keys[9]     = keystates[SDL_SCANCODE_S];
+    keys[10]    = keystates[SDL_SCANCODE_D];
+    keys[11]    = keystates[SDL_SCANCODE_F];
+    keys[12]    = keystates[SDL_SCANCODE_Z];
+    keys[13]    = keystates[SDL_SCANCODE_X];
+    keys[14]    = keystates[SDL_SCANCODE_C];
+    keys[15]    = keystates[SDL_SCANCODE_V];
 
     if (keystates[SDL_SCANCODE_ESCAPE]) {
         running = 0;

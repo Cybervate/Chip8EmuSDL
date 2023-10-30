@@ -247,7 +247,7 @@ void cycle() {
                 case 0xA1:
                     if(!keys[v[x]]) pc += 2;
                     break;
-                defualt:
+                default:
                     unknownInstruction(opcode);
             }
             break;
