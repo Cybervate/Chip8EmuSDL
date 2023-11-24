@@ -92,7 +92,6 @@ void draw(uint8_t x, uint8_t y, uint8_t n) {
             *displayp = *displayp ^ curBit;
         }
     }
-
 }
 
 void unknownInstruction(uint16_t instruction) {
@@ -323,7 +322,6 @@ void timerTick() {
         soundTimer--;
         if (!soundTimer)
         {
-            // TODO
             printf("SOUNDTIMERWENTOFF");
             soundFlag = 1;
         }

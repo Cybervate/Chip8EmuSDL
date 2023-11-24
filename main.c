@@ -1,4 +1,5 @@
 #include "emulator.c"
+#include <string.h>
 
 // Original chip 8 is 64x32, Scaling multiplies this by a set amount in order to make the game bigger, I set default to 16 which is 1024x512
 uint8_t scaling = 16;
@@ -122,19 +123,19 @@ int main(int argc, char** argv) {
             }
             else if(strcmp(argv[i], "-c") == 0) {
                 if (argv[i + 1]) {
-                    if(strcmp(argv[i + 1], "white") == 0) {
+                    if(strcmp(strlwr(argv[i + 1]), "white") == 0) {
                         color = White;
                     }
-                    else if(strcmp(argv[i + 1], "red") == 0) {
+                    else if(strcmp(strlwr(argv[i + 1]), "red") == 0) {
                         color = Red;
                     }
-                    else if(strcmp(argv[i + 1], "green") == 0) {
+                    else if(strcmp(strlwr(argv[i + 1]), "green") == 0) {
                         color = Green;
                     }
-                    else if(strcmp(argv[i + 1], "blue") == 0) {
+                    else if(strcmp(strlwr(argv[i + 1]), "blue") == 0) {
                         color = Blue;
                     }
-                    else if(strcmp(argv[i + 1], "magenta") == 0) {
+                    else if(strcmp(strlwr(argv[i + 1]), "magenta") == 0) {
                         color = Magenta;
                     }
                 }
